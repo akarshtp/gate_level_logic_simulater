@@ -37,6 +37,9 @@ class Gate;
  */
 class SimulationEngine {
 public:
+    /// Callback type for observing net value changes during simulation
+    using ValueChangeCallback = std::function<void(uint64_t time, const Net* net, Signal new_value)>;
+
     SimulationEngine();
     ~SimulationEngine();
 
@@ -73,6 +76,15 @@ public:
      */
     void scheduleEvent(uint64_t time, Net* net, Signal value);
 
+    /**
+     * @brief Generate periodic clock transition events on a net.
+     * @param net        Target net for the clock signal.
+     * @param period     Clock period in simulation time units.
+     * @param cycles     Number of clock cycles to generate.
+     * @param start_time Simulation time at which to start the clock (default: 0).
+     */
+    void generateClock(Net* net, uint64_t period, uint64_t cycles, uint64_t start_time = 0);
+
     // ── Simulation control ────────────────────────────
 
     /**
@@ -85,6 +97,17 @@ public:
      * @brief Reset the engine state (clears events, time, and fanout map).
      */
     void reset();
+
+    /**
+     * @brief Set a callback to be invoked on every net value change.
+     *
+     * Used for VCD waveform recording, logging, or custom monitoring.
+     * The callback receives the simulation time, the changed net, and
+     * the new signal value.
+     *
+     * @param callback Function to call on each value change.
+     */
+    void setValueChangeCallback(ValueChangeCallback callback);
 
     // ── Accessors ─────────────────────────────────────
 
@@ -116,4 +139,7 @@ private:
 
     /// Counter for events processed
     uint64_t events_processed_;
+
+    /// Optional callback invoked on each net value change
+    ValueChangeCallback value_change_callback_;
 };
